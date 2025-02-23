@@ -10,11 +10,16 @@ class PostQuerySet(models.QuerySet):
 
     def fetch_with_comments_count(self):
         posts_id = [post.id for post in self]
-        posts_with_comments = Post.objects.filter(id__in=posts_id).annotate(commemts_count=Count('comments'))
-        ids_and_comments = posts_with_comments.values_list('id', 'commemts_count')
-        count_for_id = dict(ids_and_comments)
+        posts_with_comments = Post.objects.filter(id__in=posts_id).annotate(
+            comments_count=Count('comments'),
+            tags_count=Count('tags')
+            )
+
+        ids_and_comments = posts_with_comments.values_list('id', 'comments_count', 'tags_count')
+        count_for_id = {post_id:(comments_count, tags_count) for post_id,  comments_count, tags_count in ids_and_comments}
+
         for post in self:
-            post.comments_count = count_for_id[post.id]
+            post.comments_count, post.tags_count = count_for_id[post.id]
 
         return self
 
